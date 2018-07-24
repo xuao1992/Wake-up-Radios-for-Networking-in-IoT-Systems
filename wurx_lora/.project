@@ -24,4 +24,10 @@
 		<nature>org.eclipse.cdt.core.ccnature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<variableList>
+		<variable>
+			<name>drivrlib</name>
+			<value>file:/C:/Users/ax1a17/Downloads/demo/driverlib</value>
+		</variable>
+	</variableList>
 </projectDescription>

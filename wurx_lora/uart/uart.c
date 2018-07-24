@@ -7,11 +7,20 @@
 
 #include <msp430.h>
 #include <misc.h>
+#include <stdio.h>
+#include <string.h>
 
 #define UART_TX_READY	(UCA1IFG & UCTXIFG)
 #define UART_RX_READY	(UCA1IFG & UCRXIFG)
 #define UART_TX_DONE	(UCA1IFG & UCTXCPTIFG)
 #define UART_RESET_TX_DONE	(UCA1IFG &= ~UCTXCPTIFG)
+
+#define UART_PRINTF
+
+#ifdef UART_PRINTF
+int fputc(int _c, register FILE *_fp);
+int fputs(const char *_ptr, register FILE *_fp);
+#endif
 
 
 /*

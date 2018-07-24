@@ -8,8 +8,13 @@
 #include <spi.h>
 #include <config.h>
 #include <timers.h>
+#include <stdio.h>
 
 #define OOK_TX_POWER	10u
+
+
+#define GPIO_PORT_P3                                                          3
+#define GPIO_PIN4                                                      (0x0010)
 /*
  * Initialize the clock
  *
@@ -45,11 +50,15 @@ void rx_packet_handler(void)
 	// DO NOTHING
 }
 
+void local_packet_handler(void){
+
+}
+
 static void radio_init(void)
 {
 	// Initializing the SX1276 radio
 	init_spi();
-	sx1276_init(NULL, rx_packet_handler, radio_timeout_handler, radio_crc_error_handler);
+	sx1276_init(local_packet_handler, rx_packet_handler, radio_timeout_handler, radio_crc_error_handler);
 }
 
 static void set_ook_mode(unsigned int tx_power)
@@ -82,6 +91,26 @@ void send_wub(void)
     sx1276_set_rx_config(MODEM_LORA, 0, 1000, 0, 83333, 0, 21u, true, 1, false);
 }
 
+void blinking(void)
+{
+    printf("hello!!!\n");
+    fflush(stdout);
+//    SHT21ReadTemperature();
+//    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN4);
+//    TB0CCTL0 = CCIE;
+//    TB0CCR0 = 1000;
+//    TB0CTL = TBSSEL__ACLK | MC__UP;
+//    __bis_SR_register(LPM3_bits);
+
+//    SHT21ReadHumidity();
+//    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN4);
+//    TB0CCTL0 = CCIE;
+//    TB0CCR0 = 1000;
+//    TB0CTL = TBSSEL__ACLK | MC__UP;
+//    __bis_SR_register(LPM3_bits);
+}
+
+
 // -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
@@ -98,6 +127,8 @@ void main(void)
     //while(1);
 
     timer_set_periodic_event(32768u, send_wub);
+//    timer_set_periodic_event(8u, send_wub);
+    timer_set_periodic_event(22768u, blinking);
 
     radio_init();
 
