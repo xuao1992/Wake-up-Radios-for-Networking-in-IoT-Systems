@@ -1,0 +1,1 @@
+"./main.obj" "./event/event.obj" "./intern_temp_sensor/intern_temp_sensor.obj" "./misc/misc.obj" "./spi/spi.obj" "./sx1276/sx1276_driver.obj" "./timers/timers.obj" "./uart/uart.obj" "../lnk_msp430fr5969.cmd" -llibmpu_init.a -llibmath.a -llibc.a 
