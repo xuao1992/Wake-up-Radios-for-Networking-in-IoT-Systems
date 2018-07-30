@@ -53,23 +53,33 @@ char* itoa(int value, char* result, int base)
 // LEDs manipulations
 // LED 1 : P4.6
 // LED 2 : P1.0
+
+// LED 1 : P3.3
+// LED 2 : P3.4   //Author: Xu Ao
 // --------------------------------------------------------------------------
 void leds_init(void)
 {
-	P4DIR |= BIT6;
-	P1DIR |= BIT0;
-	P4OUT &= ~BIT6;
-	P1OUT &= ~BIT0;
+//	P4DIR |= BIT6;
+//	P1DIR |= BIT0;
+//	P4OUT &= ~BIT6;
+//	P1OUT &= ~BIT0;
+
+	P3DIR |= BIT3;
+	P3DIR |= BIT4;
+	P3OUT &= ~BIT3;
+	P3OUT &= ~BIT4;
 }
 
 void led1_on(void)
 {
-	P4OUT |= BIT6;
+//	P4OUT |= BIT6;
+    P3OUT |= BIT3;
 }
 
 void led1_off(void)
 {
-	P4OUT &= ~BIT6;
+//	P4OUT &= ~BIT6;
+    P3OUT &= ~BIT3;
 }
 
 void led1_long_blink(void)
@@ -92,12 +102,14 @@ void led1_fast_double_blink(void)
 
 void led2_on(void)
 {
-	P1OUT |= BIT0;
+//	P1OUT |= BIT0;
+    P3OUT |= BIT4;
 }
 
 void led2_off(void)
 {
-	P1OUT &= ~BIT0;
+//	P1OUT &= ~BIT0;
+    P3OUT &= ~BIT4;
 }
 
 void led2_blink(void)

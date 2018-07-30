@@ -10,11 +10,11 @@
 #include <timers.h>
 #include <stdio.h>
 
+
 #define OOK_TX_POWER	10u
+#define OOK_TX_POWERx2  20u
+#define OOK_TX_POWERx3  30u
 
-
-#define GPIO_PORT_P3                                                          3
-#define GPIO_PIN4                                                      (0x0010)
 /*
  * Initialize the clock
  *
@@ -37,20 +37,27 @@ static void init_clock(void)
 // ----------------------------------------------------------------------------------
 void radio_timeout_handler(void)
 {
+    printf("radio_timeout_handler!!!\n");
+    led2_off();
 	// DO NOTHING
 }
 
 void radio_crc_error_handler(void)
 {
+    printf("radio_crc_error_handler!!!\n");
 	// DO NOTHING
 }
 
 void rx_packet_handler(void)
 {
+    printf("rx_packet_handler!!!\n");
+    led1_fast_double_blink();
 	// DO NOTHING
 }
 
-void local_packet_handler(void){
+void local_packet_handler(void)
+{
+    printf("local_packet_handler!!!\n");
 
 }
 
@@ -59,6 +66,8 @@ static void radio_init(void)
 	// Initializing the SX1276 radio
 	init_spi();
 	sx1276_init(local_packet_handler, rx_packet_handler, radio_timeout_handler, radio_crc_error_handler);
+
+	printf("sx1276 initialled!!\n");
 }
 
 static void set_ook_mode(unsigned int tx_power)
@@ -76,7 +85,16 @@ static void set_ook_mode(unsigned int tx_power)
     // CRC disabled
     // Timeout: ~5ms
     sx1276_set_tx_config(MODEM_LORA, tx_power, 0, 0, 1000, 0, 0, true, false);
-    sx1276_set_rx_config(MODEM_LORA, 0, 1000, 0, 83333, 0, 21u, true, 1, false);
+    sx1276_set_rx_config(MODEM_LORA, 0, 1000, 0, 83333, 0, 0, true, 1, false);
+    sx1276_disable_sync_word();
+
+    printf("ook mode set up!!! %d\n", tx_power);
+}
+
+static void set_lora_mode(unsigned int tx_power)
+{
+    sx1276_set_tx_config(MODEM_LORA, tx_power, 0, 0, 1000, 0, 0, true, false);
+    sx1276_set_rx_config(MODEM_LORA, 0, 1000,0, 83333, 0, 21u, true, 1, false);
     sx1276_disable_sync_word();
 }
 
@@ -85,31 +103,34 @@ void send_wub(void)
 	uint8_t wub[] = {0x6B, 0x55};
 	set_ook_mode(OOK_TX_POWER);
 	sx1276_tx_pkt((char*)wub, 2u, 0u);	// Don't care about the third parameter when sending using OOK
+	led1_fast_double_blink();
+    printf("sent_wub!!\n");
 
 	// FIXME
     sx1276_set_tx_config(MODEM_LORA, OOK_TX_POWER, 0, 0, 1000, 0, 0, true, false);
     sx1276_set_rx_config(MODEM_LORA, 0, 1000, 0, 83333, 0, 21u, true, 1, false);
+
 }
 
-void blinking(void)
+void receive_wub(void)
 {
-    printf("hello!!!\n");
-    fflush(stdout);
-//    SHT21ReadTemperature();
-//    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN4);
-//    TB0CCTL0 = CCIE;
-//    TB0CCR0 = 1000;
-//    TB0CTL = TBSSEL__ACLK | MC__UP;
-//    __bis_SR_register(LPM3_bits);
+    set_ook_mode(OOK_TX_POWER);
+    sx1276_rx_single_pkt();  // Don't care about the third parameter when sending using OOK
+    printf("receive_wub!!\n");
+    led2_on();
 
-//    SHT21ReadHumidity();
-//    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN4);
-//    TB0CCTL0 = CCIE;
-//    TB0CCR0 = 1000;
-//    TB0CTL = TBSSEL__ACLK | MC__UP;
-//    __bis_SR_register(LPM3_bits);
+    // FIXME
+    sx1276_set_tx_config(MODEM_LORA, OOK_TX_POWER, 0, 0, 1000, 0, 0, true, false);
+    sx1276_set_rx_config(MODEM_LORA, 0, 1000, 0, 83333, 0, 0, true, 1, false);
 }
 
+void send_lora(void)
+{
+//    unit8_t lora[] = {0x68, 0x55};
+//    set_lora_mode(OOK_TX_POWER);
+//    sx1276_tx_pkt(())
+
+}
 
 // -----------------------------------------------------------------------------
 // Main
@@ -126,9 +147,13 @@ void main(void)
 
     //while(1);
 
+    leds_init();
+
     timer_set_periodic_event(32768u, send_wub);
-//    timer_set_periodic_event(8u, send_wub);
-    timer_set_periodic_event(22768u, blinking);
+    timer_set_periodic_event(3276u, receive_wub);
+//    timer_set_periodic_event(32768u, led1_fast_double_blink);
+//    timer_set_periodic_event(16384u, led2_blink);
+    printf("event set up!!!\n");
 
     radio_init();
 

@@ -408,6 +408,7 @@ Modem_t sx1276_get_modem(void)
 #pragma vector=PORT1_VECTOR
 __interrupt void rx_interrupt_handler(void)
 {
+
 	if (P1IFG & BIT3)
 	{
 		// Stop RX timeout timer
@@ -492,6 +493,7 @@ rx_pkt_it_end:
 
 void rx_timeout_handler(void)
 {
+
 	go_sbtdby_mode();
 	event_signal(_timeout_ev_id);
 }

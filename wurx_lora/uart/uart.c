@@ -15,6 +15,9 @@
 #define UART_TX_DONE	(UCA1IFG & UCTXCPTIFG)
 #define UART_RESET_TX_DONE	(UCA1IFG &= ~UCTXCPTIFG)
 
+/**
+ * printf via uart
+ */
 #define UART_PRINTF
 
 #ifdef UART_PRINTF
