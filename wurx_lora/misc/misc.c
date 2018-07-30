@@ -121,6 +121,7 @@ void led2_blink(void)
 
 // -----------------------------------------------------------------------------
 // Button SW1 : P4.5
+// Button SW1 : P3.1  Author: Xu Ao
 // When it is pressed, the LPM3 mode is left.
 // -----------------------------------------------------------------------------
 // Event id associated with the button
@@ -128,28 +129,36 @@ static uint16_t _sw1_event;
 
 void sw1_init(event_handler_t sw1_handler)
 {
-	P4DIR &= ~BIT5;	// Input
-	P4OUT |= BIT5;	// Pull up
-	P4REN |= BIT5;	// Pull-up enabled
-	P4IFG &= ~BIT5;	// Clear interrupts
-	P4IES |= BIT5;	// On a high to low transition...
-	P4IE |= BIT5;	// ...generate an interrupt
+//	P4DIR &= ~BIT5;	// Input
+//	P4OUT |= BIT5;	// Pull up
+//	P4REN |= BIT5;	// Pull-up enabled
+//	P4IFG &= ~BIT5;	// Clear interrupts
+//	P4IES |= BIT5;	// On a high to low transition...
+//	P4IE |= BIT5;	// ...generate an interrupt
+
+    P3DIR &= ~BIT1; // Input
+    P3OUT |= BIT1;  // Pull up
+    P3REN |= BIT1;  // Pull-up enabled
+    P3IFG &= ~BIT1; // Clear interrupts
+    P3IES |= BIT1;  // On a high to low transition...
+    P3IE |= BIT1;   // ...generate an interrupt
+
 
 	_sw1_event = event_add(sw1_handler);
 }
 
-#define SW1	(!(P4IN & BIT5))
+#define SW1	(!(P3IN & BIT1))
 
-#pragma vector=PORT4_VECTOR
+#pragma vector=PORT3_VECTOR
 __interrupt void sw1_interrupt_handler(void)
 {
-	if (P4IFG & BIT5)
+	if (P3IFG & BIT1)
 	{
 		// Wait for the button to be released
 		while (SW1);
 
 		// Reset the interrupt flag
-		P4IFG &= ~BIT5;
+		P3IFG &= ~BIT1;
 
 		// Signal the event associated with the button
 		EVENT_SIGNAL_ISR(_sw1_event);

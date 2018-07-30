@@ -61,6 +61,11 @@ void local_packet_handler(void)
 
 }
 
+void sw1_handler(void)
+{
+    printf("sw1_handler!!!\n");
+}
+
 static void radio_init(void)
 {
 	// Initializing the SX1276 radio
@@ -148,6 +153,7 @@ void main(void)
     //while(1);
 
     leds_init();
+    sw1_init(sw1_handler);
 
     timer_set_periodic_event(32768u, send_wub);
     timer_set_periodic_event(3276u, receive_wub);
