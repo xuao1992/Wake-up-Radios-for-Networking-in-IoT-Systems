@@ -7,6 +7,7 @@
 
 #include <msp430.h>
 #include "spi.h"
+#include <stdio.h>
 
 #define BIT_SPI_CS	BIT0
 #define BIT_RESET	BIT4
@@ -86,6 +87,8 @@ void spi_snd_data(uint8_t reg_add, uint8_t data)
 	while (UCA0STATW & UCBUSY);
 
 	P3OUT |= BIT_SPI_CS;
+
+	printf("SPI_SND_DATA: Address: %x , Data: %x\n", reg_add, data);
 }
 
 /*
@@ -104,5 +107,8 @@ uint8_t spi_rcv_data(uint8_t reg_add)
 	while (UCA0STATW & UCBUSY);
 
 	P3OUT |= BIT_SPI_CS;
+
+	printf("SPI_RCV_DATA: Address: %x, Data: %x\n", reg_add, UCA0RXBUF);
 	return UCA0RXBUF;
+
 }
