@@ -623,7 +623,7 @@ void sx1276_tx_pkt(char *data, uint8_t pkt_size, uint8_t address)
 		spi_snd_data(REG_LR_PAYLOADLENGTH, pkt_size+2);	// +2 for the dst address and src address
 
 		fifo_addr = spi_rcv_data(REG_LR_FIFOTXBASEADDR);
-		spi_snd_data(REG_LR_FIFOADDRPTR, fifo_addr);
+//		spi_snd_data(REG_LR_FIFOADDRPTR, fifo_addr);  GFSK Mode Configuration, not necessary in LoRa Mode Author: Xu Ao
 
 		// Writing the address of the recipient in the TX FIFO
 		spi_snd_data(REG_LR_FIFO, address);
@@ -748,7 +748,8 @@ void sx1276_set_rx_config( Modem_t modem, uint32_t bandwidth,
 		uint8_t d = RFLR_OPMODE_LONGRANGEMODE_ON
 				+ RFLR_OPMODE_SLEEP
 				+ RFLR_OPMODE_ACCESSSHAREDREG_DISABLE
-				+ RFLR_OPMODE_FREQMODE_ACCESS_HF;
+				+ RFLR_OPMODE_FREQMODE_ACCESS_HF
+				+ RFLR_OPMODE_RECEIVER; //Author: Xu Ao
 		spi_snd_data(REG_OPMODE, d);
 
 		if( bandwidth > 2 )
@@ -954,7 +955,8 @@ void sx1276_set_tx_config( Modem_t modem, int8_t power, uint32_t fdev,
 		uint8_t d = RFLR_OPMODE_LONGRANGEMODE_ON
 				+ RFLR_OPMODE_SLEEP
 				+ RFLR_OPMODE_ACCESSSHAREDREG_DISABLE
-				+ RFLR_OPMODE_FREQMODE_ACCESS_HF;
+				+ RFLR_OPMODE_FREQMODE_ACCESS_HF
+				+ RFLR_OPMODE_TRANSMITTER; // Tx mode Author: Xu Ao
 		spi_snd_data(REG_OPMODE, d);
 
 		if( bandwidth > 2 )
@@ -1001,7 +1003,8 @@ void sx1276_set_tx_config( Modem_t modem, int8_t power, uint32_t fdev,
 		spi_snd_data( REG_LR_MODEMCONFIG3,
 					 ( spi_rcv_data( REG_LR_MODEMCONFIG3 ) &
 					   RFLR_MODEMCONFIG3_LOWDATARATEOPTIMIZE_MASK ) |
-					   ( LowDatarateOptimize << 3 ) );
+					   ( LowDatarateOptimize ) );
+//					   ( LowDatarateOptimize << 3 ) );// FIXME ?? Why << 3 Author:Xu Ao
 
 		spi_snd_data( REG_LR_PREAMBLEMSB, ( preambleLen >> 8 ) & 0x00FF );
 		spi_snd_data( REG_LR_PREAMBLELSB, preambleLen & 0xFF );

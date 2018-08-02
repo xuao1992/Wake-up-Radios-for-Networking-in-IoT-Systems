@@ -15,7 +15,7 @@
 
 #define LORA_BANDWIDTH_VALUE               0
 #define LORA_DATARATE_VALUE                1000
-#define LORA_CODERATE_VALUE                0
+#define LORA_CODERATE_VALUE                1
 #define LORA_BANDWIDTHAFC_VALUE            83333
 #define LORA_PREAMBLELEN_VALUE             0
 #define RX_TIMEOUT_VALUE                   3500000u
@@ -74,6 +74,7 @@ void local_packet_handler(void)
 
 void sw1_handler(void)
 {
+    sx1276_reset();
     printf("sw1_handler!!!\n");
     //DO NOTHING
 }
@@ -143,17 +144,21 @@ static void set_lora_mode(unsigned int tx_power)
                          LORA_DATARATE_VALUE, LORA_CODERATE_VALUE,
                          LORA_PREAMBLELEN_VALUE, LORA_FIXLEN_VALUE,
                          LORA_CRC_ON);
+
+
+    printf("lora tx config set up!!! %d\n", tx_power);
+
     sx1276_set_rx_config(MODEM_LORA, LORA_BANDWIDTH_VALUE, LORA_DATARATE_VALUE,
                          LORA_CODERATE_VALUE, LORA_BANDWIDTHAFC_VALUE,
                          LORA_PREAMBLELEN_VALUE, RX_TIMEOUT_VALUE,
                          LORA_FIXLEN_VALUE, LORA_PAYLOADLEN_VALUE, LORA_CRC_ON);
 
-    printf("lora mode set up!!! %d\n", tx_power);
+    printf("lora rx config set up!!! \n");
 }
 
 void send_lora(void)
 {
-    uint8_t data[] = { 0x6B, 0x55 };
+    uint8_t data[] = { 0x2B, 0x3B };
     set_lora_mode(LORA_TX_POWER);
     sx1276_tx_pkt((char*) data, 2u, DEST_ADDRESS); // Don't care about the third parameter when sending using OOK
     led1_fast_double_blink();

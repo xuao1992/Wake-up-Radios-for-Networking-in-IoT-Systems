@@ -88,7 +88,7 @@ void spi_snd_data(uint8_t reg_add, uint8_t data)
 
 	P3OUT |= BIT_SPI_CS;
 
-	printf("SPI_SND_DATA: Address: %x , Data: %x\n", reg_add, data);
+	printf("        SPI_SND_DATA: Address: %x , Data: %x\n", reg_add, data);
 }
 
 /*
