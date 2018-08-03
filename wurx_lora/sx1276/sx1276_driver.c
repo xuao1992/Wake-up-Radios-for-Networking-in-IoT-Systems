@@ -748,8 +748,7 @@ void sx1276_set_rx_config( Modem_t modem, uint32_t bandwidth,
 		uint8_t d = RFLR_OPMODE_LONGRANGEMODE_ON
 				+ RFLR_OPMODE_SLEEP
 				+ RFLR_OPMODE_ACCESSSHAREDREG_DISABLE
-				+ RFLR_OPMODE_FREQMODE_ACCESS_HF
-				+ RFLR_OPMODE_RECEIVER; //Author: Xu Ao
+				+ RFLR_OPMODE_FREQMODE_ACCESS_HF;
 		spi_snd_data(REG_OPMODE, d);
 
 		if( bandwidth > 2 )
@@ -956,7 +955,7 @@ void sx1276_set_tx_config( Modem_t modem, int8_t power, uint32_t fdev,
 				+ RFLR_OPMODE_SLEEP
 				+ RFLR_OPMODE_ACCESSSHAREDREG_DISABLE
 				+ RFLR_OPMODE_FREQMODE_ACCESS_HF
-				+ RFLR_OPMODE_TRANSMITTER; // Tx mode Author: Xu Ao
+				+ RFLR_OPMODE_TRANSMITTER; //TODO
 		spi_snd_data(REG_OPMODE, d);
 
 		if( bandwidth > 2 )

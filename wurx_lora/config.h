@@ -18,12 +18,12 @@
 #define WUB_PREAMBLE	0xEAu
 
 // Address of the cluster head
-#define		NODE_NO	2u
+#define		NODE_NO	1u
 
-#if NODE_NO == 1u
+#if NODE_NO == 1u //for sender Author: Xu Ao
 #define NODE_ADDRESS	0x55u
 #define DEST_ADDRESS	0x56u
-#elif NODE_NO == 2u
+#elif NODE_NO == 2u//for receiver Author:Xu Ao
 #define NODE_ADDRESS	0x56u
 #define DEST_ADDRESS	0x55u
 #endif

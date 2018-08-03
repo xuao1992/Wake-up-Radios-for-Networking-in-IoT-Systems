@@ -18,7 +18,7 @@
 #define LORA_CODERATE_VALUE                1
 #define LORA_BANDWIDTHAFC_VALUE            83333
 #define LORA_PREAMBLELEN_VALUE             0
-#define RX_TIMEOUT_VALUE                   3500000u
+#define RX_TIMEOUT_VALUE                   21u
 #define LORA_FIXLEN_VALUE                  true
 #define LORA_PAYLOADLEN_VALUE              1
 #define LORA_CRC_ON                        false
@@ -128,7 +128,7 @@ void send_wub(void)
 void receive_wub(void)
 {
     set_ook_mode(OOK_TX_POWER);
-    sx1276_rx_single_pkt(); // Don't care about the third parameter when sending using OOK
+    sx1276_rx_single_pkt();
     printf("receive_wub!!\n");
     led2_on();
 
@@ -162,7 +162,7 @@ void send_lora(void)
     set_lora_mode(LORA_TX_POWER);
     sx1276_tx_pkt((char*) data, 2u, DEST_ADDRESS); // Don't care about the third parameter when sending using OOK
     led1_fast_double_blink();
-    printf("send %s to %d!!\n", data, DEST_ADDRESS);
+    printf("send %X to %X!!\n", data, DEST_ADDRESS);
 
 }
 
@@ -186,15 +186,15 @@ void main(void)
     init_clock();
     event_init();
     timers_init();
-//    srand(NODE_ADDRESS);
+    srand(NODE_ADDRESS);
 
     //while(1);
 
     leds_init();
     sw1_init(sw1_handler);
 
-//    timer_set_periodic_event(32768u, send_lora);
-    timer_set_periodic_event(32768u, receive_lora);
+    timer_set_periodic_event(32768u, send_lora);
+//    timer_set_periodic_event(32768u, receive_lora);
     printf("event set up!!!\n");
 
     radio_init();
