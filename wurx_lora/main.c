@@ -13,15 +13,15 @@
 #define OOK_TX_POWER	10u
 #define LORA_TX_POWER   10u
 
-#define LORA_BANDWIDTH_VALUE               0
-#define LORA_DATARATE_VALUE                1000
-#define LORA_CODERATE_VALUE                1
+#define LORA_BANDWIDTH_VALUE               0   //0-2
+#define LORA_DATARATE_VALUE                12  //6-12    SpreadingFactor
+#define LORA_CODERATE_VALUE                0   //1-4  all other values: reserved
 #define LORA_BANDWIDTHAFC_VALUE            83333
-#define LORA_PREAMBLELEN_VALUE             0
-#define RX_TIMEOUT_VALUE                   21u
-#define LORA_FIXLEN_VALUE                  true
+#define LORA_PREAMBLELEN_VALUE             6u
+#define RX_TIMEOUT_VALUE                   0  //21
+#define LORA_FIXLEN_VALUE                  false  //implicit header
 #define LORA_PAYLOADLEN_VALUE              1
-#define LORA_CRC_ON                        false
+#define LORA_CRC_ON                        true
 
 /*
  * Initialize the clock
@@ -140,6 +140,8 @@ void receive_wub(void)
 
 static void set_lora_mode(unsigned int tx_power)
 {
+    sx1276_sleep(); // sleep is nessary for MODEM changing
+
     sx1276_set_tx_config(MODEM_LORA, tx_power, 0, LORA_BANDWIDTH_VALUE,
                          LORA_DATARATE_VALUE, LORA_CODERATE_VALUE,
                          LORA_PREAMBLELEN_VALUE, LORA_FIXLEN_VALUE,
@@ -154,15 +156,17 @@ static void set_lora_mode(unsigned int tx_power)
                          LORA_FIXLEN_VALUE, LORA_PAYLOADLEN_VALUE, LORA_CRC_ON);
 
     printf("lora rx config set up!!! \n");
+
+    sx1276_disable_sync_word();
 }
 
 void send_lora(void)
 {
-    uint8_t data[] = { 0x2B, 0x3B };
+    uint8_t data[] = { 0x1B, 0x2B,0x3B,0x4B,0x5B };
     set_lora_mode(LORA_TX_POWER);
-    sx1276_tx_pkt((char*) data, 2u, DEST_ADDRESS); // Don't care about the third parameter when sending using OOK
+    sx1276_tx_pkt((char*) data, 5u, DEST_ADDRESS); // Don't care about the third parameter when sending using OOK
     led1_fast_double_blink();
-    printf("send %X to %X!!\n", data, DEST_ADDRESS);
+    printf("send %c to %X!!\n", (char*) data, DEST_ADDRESS);
 
 }
 
@@ -170,9 +174,8 @@ void receive_lora(void)
 {
     set_lora_mode(LORA_TX_POWER);
     sx1276_rx_single_pkt();
-    printf("receive_lora!!\n");
+    printf("receiving_lora!!\n");
     led2_on();
-
 }
 
 // -----------------------------------------------------------------------------
@@ -193,8 +196,8 @@ void main(void)
     leds_init();
     sw1_init(sw1_handler);
 
-    timer_set_periodic_event(32768u, send_lora);
-//    timer_set_periodic_event(32768u, receive_lora);
+//    timer_set_periodic_event(32768u, send_lora);
+    timer_set_periodic_event(32768u, receive_lora);
     printf("event set up!!!\n");
 
     radio_init();
@@ -203,4 +206,5 @@ void main(void)
 
     // Starting the event loop
     event_loop();
+
 }
