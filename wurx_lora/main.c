@@ -62,6 +62,8 @@ void rx_packet_handler(void)
     printf("rx_packet_handler!!!\n");
     led2_off();
     led1_fast_double_blink();
+
+    printf("receive data: %s \n", sx1276_rx_fifo[sx1276_rx_fifo_first].data);
     // DO NOTHING
 }
 
@@ -162,11 +164,12 @@ static void set_lora_mode(unsigned int tx_power)
 
 void send_lora(void)
 {
-    uint8_t data[] = { 0x1B, 0x2B,0x3B,0x4B,0x5B };
+//    uint8_t data[] = { 0x1B, 0x2B,0x3B,0x4B,0x5B };
+    char data[] = "Hello World!";
     set_lora_mode(LORA_TX_POWER);
-    sx1276_tx_pkt((char*) data, 5u, DEST_ADDRESS); // Don't care about the third parameter when sending using OOK
+    sx1276_tx_pkt((char*) data, strlen(data), DEST_ADDRESS); // Don't care about the third parameter when sending using OOK
     led1_fast_double_blink();
-    printf("send %c to %X!!\n", (char*) data, DEST_ADDRESS);
+    printf("send \"%s\" to %X!!\n", data, DEST_ADDRESS);
 
 }
 
@@ -206,5 +209,4 @@ void main(void)
 
     // Starting the event loop
     event_loop();
-
 }

@@ -447,6 +447,10 @@ __interrupt void rx_interrupt_handler(void)
 				sx1276_rx_fifo[sx1276_rx_fifo_last].data[j] = spi_rcv_data(REG_LR_FIFO);
 			}
 			sx1276_rx_fifo[sx1276_rx_fifo_last].size = pkt_sz;
+
+			//record the lastfifo to read data in handler Author: Ao Xu
+			sx1276_rx_fifo_first = sx1276_rx_fifo_last;
+
 			// Incrementing the FIFO and signaling the event only if the packet was for us or broadcast
 			if ((dst_address == NODE_ADDRESS) || (dst_address == BROADCAST_ADDRESS))
 			{
