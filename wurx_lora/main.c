@@ -9,12 +9,14 @@
 #include <config.h>
 #include <timers.h>
 #include <stdio.h>
+#include <string.h>
 
 #define OOK_TX_POWER	10u
-#define LORA_TX_POWER   10u
+uint8_t LORA_TX_POWER = 2u;
 
 #define LORA_BANDWIDTH_VALUE               0   //0-2
-#define LORA_DATARATE_VALUE                12  //6-12    SpreadingFactor
+//#define LORA_DATARATE_VALUE                12  //6-12    SpreadingFactor
+uint8_t LORA_DATARATE_VALUE = 9;  //6-12    SpreadingFactor
 #define LORA_CODERATE_VALUE                0   //1-4  all other values: reserved
 #define LORA_BANDWIDTHAFC_VALUE            83333
 #define LORA_PREAMBLELEN_VALUE             6u
@@ -47,7 +49,7 @@ void radio_timeout_handler(void)
 {
     printf("radio_timeout_handler!!!\n");
     led2_off();
-    // DO NOTHING
+
 }
 
 void radio_crc_error_handler(void)
@@ -59,12 +61,44 @@ void radio_crc_error_handler(void)
 
 void rx_packet_handler(void)
 {
-    printf("rx_packet_handler!!!\n");
+//    printf("rx_packet_handler!!!\n");
     led2_off();
-    led1_fast_double_blink();
-
     printf("receive data: %s \n", sx1276_rx_fifo[sx1276_rx_fifo_first].data);
-    // DO NOTHING
+
+    if(!strcmp(sx1276_rx_fifo[sx1276_rx_fifo_first].data, "ack!")){  //sender
+        timer_set_periodic_event(32768u, sx1276_sleep);
+        printf("received ack!\n");
+        led1_on();
+    }
+    else if(!strcmp(sx1276_rx_fifo[sx1276_rx_fifo_first].data, "req")) //receiver
+    {
+        set_lora_mode(LORA_TX_POWER);
+        __delay_cycles(1000000u);
+        sx1276_tx_pkt("ack!", 4, DEST_ADDRESS);
+        led1_fast_double_blink();
+        printf("sent ack!\n");
+    }
+    else if(!strcmp(sx1276_rx_fifo[sx1276_rx_fifo_first].data, "reqdr")) //receiver
+    {
+        set_lora_mode(LORA_TX_POWER);
+        __delay_cycles(1000000u);
+        sx1276_tx_pkt("syndr7", 6, DEST_ADDRESS);
+        LORA_DATARATE_VALUE = 7;
+        led1_fast_double_blink();
+        printf("sent syndr7!\n");
+    }
+    else if (!strncmp(sx1276_rx_fifo[sx1276_rx_fifo_first].data, "syndr", 5)) // sender
+    {
+        LORA_DATARATE_VALUE = sx1276_rx_fifo[sx1276_rx_fifo_first].data[5] - '0';
+        printf("modified LORA_DATARATE_VALUE = %d\n", LORA_DATARATE_VALUE);
+        set_lora_mode(LORA_TX_POWER);
+        __delay_cycles(1000000u);
+        sx1276_tx_pkt("req", 4, DEST_ADDRESS);
+        led1_fast_double_blink();
+        printf("sent req!\n");
+        sx1276_rx_single_pkt();
+        led2_on();
+    }
 }
 
 void local_packet_handler(void)
@@ -88,7 +122,7 @@ static void radio_init(void)
     sx1276_init(local_packet_handler, rx_packet_handler, radio_timeout_handler,
                 radio_crc_error_handler);
 
-    printf("sx1276 initialled!!\n");
+//    printf("sx1276 initialled!!\n");
 }
 
 static void set_ook_mode(unsigned int tx_power)
@@ -150,14 +184,14 @@ static void set_lora_mode(unsigned int tx_power)
                          LORA_CRC_ON);
 
 
-    printf("lora tx config set up!!! %d\n", tx_power);
+//    printf("lora tx config set up!!! %d\n", tx_power);
 
     sx1276_set_rx_config(MODEM_LORA, LORA_BANDWIDTH_VALUE, LORA_DATARATE_VALUE,
                          LORA_CODERATE_VALUE, LORA_BANDWIDTHAFC_VALUE,
                          LORA_PREAMBLELEN_VALUE, RX_TIMEOUT_VALUE,
                          LORA_FIXLEN_VALUE, LORA_PAYLOADLEN_VALUE, LORA_CRC_ON);
 
-    printf("lora rx config set up!!! \n");
+//    printf("lora rx config set up!!! \n");
 
     sx1276_disable_sync_word();
 }
@@ -181,6 +215,36 @@ void receive_lora(void)
     led2_on();
 }
 
+void init_para(void)
+{
+    led2_off();
+    set_lora_mode(LORA_TX_POWER);
+    char Req_data[] = "reqdr";
+//    if(LORA_DATARATE_VALUE == 12){
+//        strcpy(Req_data, "req");
+//    } else {
+//        strcpy(Req_data, "irq");
+//    }
+    printf("sent %s + DR = %d!\n", Req_data, LORA_DATARATE_VALUE);
+    sx1276_tx_pkt((char*)Req_data, strlen(Req_data), DEST_ADDRESS);
+    led1_fast_double_blink();
+    sx1276_rx_single_pkt();
+    led2_on();
+    if (LORA_DATARATE_VALUE == 7)
+    {
+        strcpy(Req_data, "req");
+    }
+
+    else if (LORA_DATARATE_VALUE < 12)
+    {
+        LORA_DATARATE_VALUE++;
+    }
+    else
+    {
+        LORA_DATARATE_VALUE = 8;
+    }
+}
+
 // -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
@@ -200,8 +264,9 @@ void main(void)
     sw1_init(sw1_handler);
 
 //    timer_set_periodic_event(32768u, send_lora);
-    timer_set_periodic_event(32768u, receive_lora);
-    printf("event set up!!!\n");
+//    timer_set_periodic_event(32768u, receive_lora);
+    timer_set_periodic_event(32768u, init_para);
+//    printf("event set up!!!\n");
 
     radio_init();
 

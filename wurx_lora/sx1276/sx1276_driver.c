@@ -13,6 +13,7 @@
 #include <misc.h>
 #include <config.h>
 
+#include <stdio.h>
 // ---------------------------------------------------------------------------
 // Register addresses
 // ---------------------------------------------------------------------------
@@ -450,6 +451,14 @@ __interrupt void rx_interrupt_handler(void)
 
 			//record the lastfifo to read data in handler Author: Ao Xu
 			sx1276_rx_fifo_first = sx1276_rx_fifo_last;
+
+			//printf RSSI and SNR
+			uint8_t RSSI = spi_rcv_data(RegPktRssiValue);
+			uint8_t SNR = spi_rcv_data(RegPktSnrValue);
+            printf("=======================================\n");
+			printf("RSSI = %d dBm\n", RSSI-157);
+            printf("SNR = %d\n", SNR);
+            printf("=======================================\n");
 
 			// Incrementing the FIFO and signaling the event only if the packet was for us or broadcast
 			if ((dst_address == NODE_ADDRESS) || (dst_address == BROADCAST_ADDRESS))
