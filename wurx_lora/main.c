@@ -14,16 +14,25 @@
 #define OOK_TX_POWER	10u
 uint8_t LORA_TX_POWER = 2u;
 
-#define LORA_BANDWIDTH_VALUE               0   //0-2
-//#define LORA_DATARATE_VALUE                12  //6-12    SpreadingFactor
-uint8_t LORA_DATARATE_VALUE = 9;  //6-12    SpreadingFactor
-#define LORA_CODERATE_VALUE                0   //1-4  all other values: reserved
+uint32_t LORA_BANDWIDTH_VALUE = 2;   //0-2
+uint32_t LORA_DATARATE_VALUE = 7;  //6-12    SpreadingFactor
+uint8_t LORA_CODERATE_VALUE = 1;   //1-4  all other values: reserved
 #define LORA_BANDWIDTHAFC_VALUE            83333
 #define LORA_PREAMBLELEN_VALUE             6u
-#define RX_TIMEOUT_VALUE                   0  //21
+#define RX_TIMEOUT_VALUE                   1000000u  //21
 #define LORA_FIXLEN_VALUE                  false  //implicit header
 #define LORA_PAYLOADLEN_VALUE              1
 #define LORA_CRC_ON                        true
+
+
+int WAITING_RESPONSE=0;
+const uint8_t REQ = 0xC1;
+const uint8_t ACK = 0xC2;
+const uint8_t REDUCE_POWER = 0xC3;
+
+uint8_t data[] = { REQ };
+
+int STATUS_INIT = 1;
 
 /*
  * Initialize the clock
@@ -50,6 +59,21 @@ void radio_timeout_handler(void)
     printf("radio_timeout_handler!!!\n");
     led2_off();
 
+    if(!WAITING_RESPONSE){
+        return;
+    }
+
+    if (LORA_TX_POWER < 12)
+    {
+        LORA_TX_POWER++;
+    }
+    else
+    {
+        led1_on();
+        led2_on();
+//        STATUS_INIT = 0;
+    }
+
 }
 
 void radio_crc_error_handler(void)
@@ -61,10 +85,87 @@ void radio_crc_error_handler(void)
 
 void rx_packet_handler(void)
 {
+    if (spi_rcv_data(0x1A) - 157 < -50)  //for testing, suppose message do not be received if RSSI < -50
+    {
+        return;
+    }
 //    printf("rx_packet_handler!!!\n");
     led2_off();
     printf("receive data: %s \n", sx1276_rx_fifo[sx1276_rx_fifo_first].data);
 
+    switch (sx1276_rx_fifo[sx1276_rx_fifo_first].data[0])
+    {
+    case REQ:  //for receiver
+
+        printf("receive REQ!!! \n");
+
+        WAITING_RESPONSE = 0;
+        if(spi_rcv_data(0x1A) - 157 > -20){
+            data[0] = REDUCE_POWER;
+            printf("sent REDUCE_POWER!\n");
+        } else {
+            data[0] = ACK;
+            printf("sent ACK!\n");
+        }
+        __delay_cycles(1000000u);
+        sx1276_tx_pkt((char *)data, 1u, DEST_ADDRESS);
+        led1_fast_double_blink();
+        break;
+    case ACK:  //for sender
+        printf("receive ACK!!! \n");
+//        STATUS_INIT = 0;
+        break;
+    case REDUCE_POWER:  //for sender
+        printf("receive REDUCE_POWER!!! \n");
+        if (LORA_TX_POWER > 2)
+        {
+            LORA_TX_POWER--;
+        } else {
+//            STATUS_INIT = 0;
+        }
+        break;
+    }
+
+//    printf("SENDER_TXPOWER = %d\n", sx1276_rx_fifo[sx1276_rx_fifo_first].data[0]);
+//    printf("SENDER_BANDWIDTH = %d\n", sx1276_rx_fifo[sx1276_rx_fifo_first].data[1]);
+//    printf("SENDER_DATARATE = %d\n", sx1276_rx_fifo[sx1276_rx_fifo_first].data[2]);
+//    printf("SENDER_CODERATE = %d\n", sx1276_rx_fifo[sx1276_rx_fifo_first].data[3]);
+//    printf("=======================================\n");
+//    printf("RECEIVER_BANDWIDTH = %d\n", LORA_BANDWIDTH_VALUE);
+//    printf("RECEIVER_DATARATE = %d\n", LORA_DATARATE_VALUE);
+//    printf("RECEIVER_CODERATE = %d\n", LORA_CODERATE_VALUE);
+//    printf("=======================================\n");
+
+//    if (LORA_DATARATE_VALUE < 12)
+//    {
+//        if (LORA_BANDWIDTH_VALUE < 2)
+//        {
+//            if (LORA_CODERATE_VALUE < 4)
+//            {
+//                LORA_CODERATE_VALUE++;
+//                return;
+//            }
+//            else
+//            {
+//                LORA_CODERATE_VALUE = 1;
+//            }
+//            LORA_BANDWIDTH_VALUE++;
+//            return;
+//        }
+//        else
+//        {
+//            LORA_BANDWIDTH_VALUE = 0;
+//        }
+//        LORA_DATARATE_VALUE++;
+//        return;
+//    }
+//    else
+//    {
+//        LORA_DATARATE_VALUE = 7;
+//    }
+
+
+        /*
     if(!strcmp(sx1276_rx_fifo[sx1276_rx_fifo_first].data, "ack!")){  //sender
         timer_set_periodic_event(32768u, sx1276_sleep);
         printf("received ack!\n");
@@ -99,6 +200,8 @@ void rx_packet_handler(void)
         sx1276_rx_single_pkt();
         led2_on();
     }
+
+    */
 }
 
 void local_packet_handler(void)
@@ -111,6 +214,7 @@ void local_packet_handler(void)
 void sw1_handler(void)
 {
     sx1276_reset();
+    STATUS_INIT = 1;
     printf("sw1_handler!!!\n");
     //DO NOTHING
 }
@@ -198,13 +302,42 @@ static void set_lora_mode(unsigned int tx_power)
 
 void send_lora(void)
 {
-//    uint8_t data[] = { 0x1B, 0x2B,0x3B,0x4B,0x5B };
+//    char data[] = {LORA_TX_POWER, LORA_BANDWIDTH_VALUE, LORA_DATARATE_VALUE, LORA_CODERATE_VALUE};
     char data[] = "Hello World!";
+
     set_lora_mode(LORA_TX_POWER);
-    sx1276_tx_pkt((char*) data, strlen(data), DEST_ADDRESS); // Don't care about the third parameter when sending using OOK
+//    sx1276_tx_pkt((char*) data, 4u, DEST_ADDRESS);
+    sx1276_tx_pkt((char*) data, strlen(data), DEST_ADDRESS);
     led1_fast_double_blink();
     printf("send \"%s\" to %X!!\n", data, DEST_ADDRESS);
 
+//    if (LORA_DATARATE_VALUE < 9)
+//    {
+//        if (LORA_BANDWIDTH_VALUE < 2)
+//        {
+//            if (LORA_CODERATE_VALUE < 4)
+//            {
+//                LORA_CODERATE_VALUE++;
+//                return;
+//            }
+//            else
+//            {
+//                LORA_CODERATE_VALUE = 1;
+//            }
+//            LORA_BANDWIDTH_VALUE++;
+//            return;
+//        }
+//        else
+//        {
+//            LORA_BANDWIDTH_VALUE = 0;
+//        }
+//        LORA_DATARATE_VALUE++;
+//        return;
+//    }
+//    else
+//    {
+//        LORA_DATARATE_VALUE = 7;
+//    }
 }
 
 void receive_lora(void)
@@ -213,6 +346,26 @@ void receive_lora(void)
     sx1276_rx_single_pkt();
     printf("receiving_lora!!\n");
     led2_on();
+}
+
+void init_power()
+{
+    set_lora_mode(LORA_TX_POWER);
+    printf("tx_power = %d\n", LORA_TX_POWER);
+    led1_fast_double_blink();
+    if (STATUS_INIT)
+    {
+        sx1276_tx_pkt((char*) data, sizeof(data), DEST_ADDRESS);
+        WAITING_RESPONSE = 1;
+        sx1276_rx_single_pkt();
+        led2_on();
+    }
+    else
+    {
+        WAITING_RESPONSE = 0;
+        sx1276_tx_pkt((char*) "Hello World!!", 13u, DEST_ADDRESS);
+    }
+
 }
 
 void init_para(void)
@@ -263,11 +416,10 @@ void main(void)
     leds_init();
     sw1_init(sw1_handler);
 
-//    timer_set_periodic_event(32768u, send_lora);
+//    timer_set_periodic_event(32768u, send_wub);
 //    timer_set_periodic_event(32768u, receive_lora);
-    timer_set_periodic_event(32768u, init_para);
-//    printf("event set up!!!\n");
-
+    timer_set_periodic_event(32768u, init_power);
+//
     radio_init();
 
     _EINT();

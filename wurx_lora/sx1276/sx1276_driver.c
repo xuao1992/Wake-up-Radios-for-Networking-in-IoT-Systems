@@ -446,6 +446,9 @@ __interrupt void rx_interrupt_handler(void)
 			for (j = 0u; j < pkt_sz; j++)
 			{
 				sx1276_rx_fifo[sx1276_rx_fifo_last].data[j] = spi_rcv_data(REG_LR_FIFO);
+
+//	            printf("==============RECEIVE FIFO================\n");
+//	            printf("FIFO[%d] = %d, 0x%X, %c \n", j, sx1276_rx_fifo[sx1276_rx_fifo_last].data[j], sx1276_rx_fifo[sx1276_rx_fifo_last].data[j], sx1276_rx_fifo[sx1276_rx_fifo_last].data[j]);
 			}
 			sx1276_rx_fifo[sx1276_rx_fifo_last].size = pkt_sz;
 
@@ -465,6 +468,10 @@ __interrupt void rx_interrupt_handler(void)
 			{
 				FIFO_INCR(sx1276_rx_fifo_last, SX1276_RX_FIFO_SIZE);
 				EVENT_SIGNAL_ISR(_lora_pkt_rx_ev_id);
+			} else {
+	            printf("==============ADDR_ERROR!!==============\n");
+	            printf("dst_Address = %d\n", dst_address);
+	            printf("==============ADDR_ERROR!!==============\n");
 			}
 		}
 		else if ((_modem == MODEM_OOK) || (_modem == MODEM_FSK))
@@ -648,6 +655,9 @@ void sx1276_tx_pkt(char *data, uint8_t pkt_size, uint8_t address)
 		for (i = 0u; i < pkt_size; i++)
 		{
 			spi_snd_data(REG_LR_FIFO, data[i]);
+
+//            printf("===============SEND FIFO================\n");
+//			printf("FIFO[%d] = %d, 0x%X, %c \n", i, data[i], data[i], data[i]);
 		}
 
 		// Going to TX mode
@@ -1039,6 +1049,19 @@ void sx1276_set_tx_config( Modem_t modem, int8_t power, uint32_t fdev,
 			spi_snd_data( REG_LR_DETECTIONTHRESHOLD,
 						 RFLR_DETECTIONTHRESH_SF7_TO_SF12 );
 		}
+
+/*
+        //-------TEST---------
+        printf("===============SEND CONFIG================\n");
+        printf("MODEM = MODEM_LORA\n", modem);
+        printf("TXPOWER = %d, 0x%X, %c\n", power + 1);
+        printf("BANDWIDTH = %d, 0x%X, %c\n", bandwidth);
+        printf("DATARATE = %d, 0x%X, %c\n", datarate);
+        printf("CODERATE = %d, 0x%X, %c\n", coderate);
+        printf("PREAMBLE_LEN = %d, 0x%X, %c\n", preambleLen);
+        printf("FIXLEN = %d, 0x%X, %c\n", fixLen);
+        printf("CRCON = %d, 0x%X, %c\n", crcOn);
+*/
 	}
 }
 
